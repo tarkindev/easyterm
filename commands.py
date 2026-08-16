@@ -8,15 +8,15 @@ from state import state
 
 HELP_TEXT = """\
 Commands:
-  email                  Check unread Gmail count
-  spotify play [query]   Play a track/artist (or resume if no query)
-  spotify pause          Pause playback
-  spotify next           Skip to next track
-  spotify search <query> Search Spotify
-  open <keyword>         Launch an app (fuzzy-matched from config.toml)
-  stats                  Refresh the dashboard stats
-  help                   Show this message
-  quit / exit            Close the app
+  email              Check unread Gmail count
+  spotify play [q]   Play track/artist
+  spotify pause      Pause playback
+  spotify next       Skip track
+  spotify search <q> Search Spotify
+  open <keyword>     Launch an app
+  stats              Refresh dashboard
+  help               Show this message
+  quit / exit        Close the app
 """
 
 

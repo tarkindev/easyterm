@@ -1,1 +1,2 @@
 textual>=8.2.8
+pyfiglet>=1.0.2
