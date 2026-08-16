@@ -19,15 +19,16 @@ class StatsPanel(Static):
         self.refresh_stats()
 
     def refresh_stats(self) -> None:
-        unread = state.unread_email_count if state.unread_email_count is not None else "—"
-        track = state.current_track or "—"
+        unread = state.unread_email_count if state.unread_email_count is not None else "n/a"
+        track = state.current_track or "none"
         content = (
-            f"[bold #7ee787]◆ SESSION[/bold #7ee787]\n"
-            f"[#6e7681]⏱[/#6e7681]  Uptime        [white]{state.uptime_str()}[/white]\n"
-            f"[#6e7681]▸[/#6e7681]  Commands run  [white]{state.commands_run}[/white]\n\n"
-            f"[bold #7ee787]◆ LIVE[/bold #7ee787]\n"
-            f"[#6e7681]✉[/#6e7681]  Unread email  [white]{unread}[/white]\n"
-            f"[#6e7681]♫[/#6e7681]  Now playing   [white]{track}[/white]\n"
+            f"[bold #7ee787]SESSION[/bold #7ee787]\n"
+            f"Uptime        [white]{state.uptime_str()}[/white]\n"
+            f"Commands run  [white]{state.commands_run}[/white]\n\n"
+            f"[bold #7ee787]LIVE[/bold #7ee787]\n"
+            f"Unread email  [white]{unread}[/white]\n"
+            f"Now playing   [white]{track}[/white]\n"
+            f"Timer         [white]{state.timer_str()}[/white]\n"
         )
         self.update(content)
 
@@ -37,7 +38,7 @@ class HelpPanel(Static):
 
     def on_mount(self) -> None:
         lines = HELP_TEXT.strip().split("\n")
-        formatted = "[bold #7ee787]◆ COMMANDS[/bold #7ee787]\n"
+        formatted = "[bold #7ee787]COMMANDS[/bold #7ee787]\n"
         for line in lines[1:]:  # skip the "Commands:" header line
             formatted += f"[#c9d1d9]{line}[/#c9d1d9]\n"
         self.update(formatted)

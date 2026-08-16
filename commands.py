@@ -3,7 +3,7 @@
 Adding a new command later = write the handler, add one line to COMMANDS.
 """
 
-from modules import spotify, email, launcher
+from modules import spotify, email, launcher, timer, sysinfo, websearch, clock
 from state import state
 
 HELP_TEXT = """\
@@ -14,6 +14,10 @@ Commands:
   spotify next       Skip track
   spotify search <q> Search Spotify
   open <keyword>     Launch an app
+  timer <min> [label] Start a countdown timer
+  sysinfo            CPU, RAM, disk, battery
+  search <query>     Open a Google search in your browser
+  time                Show the current date and time
   stats              Refresh dashboard
   help               Show this message
   quit / exit        Close the app
@@ -29,7 +33,8 @@ async def show_stats(args: list[str]) -> str:
         f"Uptime: {state.uptime_str()}  |  "
         f"Commands run: {state.commands_run}  |  "
         f"Unread email: {state.unread_email_count if state.unread_email_count is not None else 'not checked'}  |  "
-        f"Current track: {state.current_track or 'none'}"
+        f"Current track: {state.current_track or 'none'}  |  "
+        f"Timer: {state.timer_str()}"
     )
 
 
@@ -37,6 +42,10 @@ COMMANDS = {
     "email": email.check_unread,
     "spotify": spotify.handle,
     "open": launcher.launch,
+    "timer": timer.handle,
+    "sysinfo": sysinfo.handle,
+    "search": websearch.handle,
+    "time": clock.handle,
     "help": show_help,
     "stats": show_stats,
 }
