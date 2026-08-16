@@ -1,0 +1,14 @@
+# Daily TUI config
+# Non-secret settings only. OAuth tokens/client secrets live in .env / token cache, never here.
+
+[launcher]
+# keyword = path to executable. Fuzzy-matched, so "disc" will match "discord".
+# Edit these to match your actual app paths.
+discord = "C:\\Users\\YOU\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe"
+vscode = "code"
+spotify_app = "spotify"
+browser = "chrome"
+
+[app]
+name = "daily-tui"
+fuzzy_match_threshold = 0.6  # 0-1, higher = stricter matching
