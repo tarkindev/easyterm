@@ -3,7 +3,7 @@
 Adding a new command later = write the handler, add one line to COMMANDS.
 """
 
-from modules import spotify, email, launcher, timer, sysinfo, websearch, clock
+from modules import spotify, email, launcher, timer, sysinfo, websearch, clock, todo, ping, clipboard
 from state import state
 
 HELP_TEXT = """\
@@ -12,12 +12,23 @@ Commands:
   spotify play [q]   Play track/artist
   spotify pause      Pause playback
   spotify next       Skip track
+  spotify previous   Go back a track
+  spotify current    Show what's playing
+  spotify devices    List Spotify devices
+  spotify volume <n> Set volume 0-100
   spotify search <q> Search Spotify
   open <keyword>     Launch an app
   timer <min> [label] Start a countdown timer
   sysinfo            CPU, RAM, disk, battery
   search <query>     Open a Google search in your browser
-  time                Show the current date and time
+  time               Show the current date and time
+  todo               List todos
+  todo add <task>    Add a todo
+  todo done <n>      Mark todo n done
+  todo remove <n>    Remove todo n
+  todo clear         Clear completed todos
+  ping [host]        Check network connectivity
+  clip <text>        Copy text to clipboard
   stats              Refresh dashboard
   help               Show this message
   quit / exit        Close the app
@@ -46,6 +57,9 @@ COMMANDS = {
     "sysinfo": sysinfo.handle,
     "search": websearch.handle,
     "time": clock.handle,
+    "todo": todo.handle,
+    "ping": ping.handle,
+    "clip": clipboard.handle,
     "help": show_help,
     "stats": show_stats,
 }

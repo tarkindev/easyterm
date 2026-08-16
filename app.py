@@ -6,6 +6,7 @@ Run with: python app.py
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, VerticalScroll
 from textual.widgets import Header, Footer, Input, RichLog
+from rich.markup import escape
 
 from homepage import Homepage
 from commands import dispatch
@@ -125,7 +126,7 @@ class DailyTUI(App):
         event.input.value = ""
 
         log = self.query_one("#output", RichLog)
-        log.write(f"[bold #39ff9d]>[/bold #39ff9d] {text}")
+        log.write(f"[bold #39ff9d]>[/bold #39ff9d] {escape(text)}")
 
         result = await dispatch(text)
 
@@ -134,7 +135,7 @@ class DailyTUI(App):
             return
 
         if result:
-            log.write(result)
+            log.write(escape(result))
 
         self.query_one(Homepage).refresh_stats()
         self.query_one("#main-scroll").scroll_end(animate=False)

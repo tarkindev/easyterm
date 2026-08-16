@@ -1,6 +1,7 @@
 """Homepage widget: the dashboard shown on launch and refreshed by 'stats'."""
 
 import pyfiglet
+from rich.markup import escape
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Static
@@ -40,7 +41,7 @@ class HelpPanel(Static):
         lines = HELP_TEXT.strip().split("\n")
         formatted = "[bold #7ee787]COMMANDS[/bold #7ee787]\n"
         for line in lines[1:]:  # skip the "Commands:" header line
-            formatted += f"[#c9d1d9]{line}[/#c9d1d9]\n"
+            formatted += f"[#c9d1d9]{escape(line)}[/#c9d1d9]\n"
         self.update(formatted)
 
 

@@ -1,3 +1,6 @@
 textual>=8.2.8
 pyfiglet>=1.0.2
 psutil>=6.0.0
+spotipy>=2.24.0
+python-dotenv>=1.0.0
+pyperclip>=1.9.0
