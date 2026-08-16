@@ -1,63 +1,69 @@
-"""Homepage widget: the dashboard shown on launch and refreshed by 'stats'."""
+"""Top status bar: compact ASCII wordmark, live stats line, and album art.
+
+Kept in homepage.py to avoid churning the repo's file layout, but this is
+now a slim always-visible strip rather than a full dashboard - the bulky
+version got replaced with something that leaves most of the screen to
+the actual command output.
+"""
 
 import pyfiglet
 from rich.markup import escape
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal
 from textual.widgets import Static
 
 from state import state
-from commands import HELP_TEXT
+from albumart import AlbumArt
 
-_ascii_art = pyfiglet.figlet_format("EASYTERM", font="small").rstrip("\n")
-BANNER = f"[bold #39ff9d]{_ascii_art}[/bold #39ff9d]"
+_ascii_art = escape(pyfiglet.figlet_format("EASYTERM", font="mini").rstrip("\n"))
 
 
-class StatsPanel(Static):
-    """Left panel: live session stats."""
+class Banner(Static):
+    """Small persistent wordmark. Fades in once on mount; can pulse on events."""
 
     def on_mount(self) -> None:
-        self.refresh_stats()
+        self.update(_ascii_art)
+
+    def pulse(self) -> None:
+        """Brief bounded flash - used for event feedback, never loops."""
+        self.styles.animate("opacity", value=0.4, duration=0.15, easing="out_cubic", on_complete=self._pulse_back)
+
+    def _pulse_back(self) -> None:
+        self.styles.animate("opacity", value=1.0, duration=0.35, easing="out_cubic")
+
+
+class StatusLine(Static):
+    """Single-line live stats. Dim labels, bright values - reads fast."""
 
     def refresh_stats(self) -> None:
         unread = state.unread_email_count if state.unread_email_count is not None else "n/a"
         track = state.current_track or "none"
-        content = (
-            f"[bold #7ee787]SESSION[/bold #7ee787]\n"
-            f"Uptime        [white]{state.uptime_str()}[/white]\n"
-            f"Commands run  [white]{state.commands_run}[/white]\n\n"
-            f"[bold #7ee787]LIVE[/bold #7ee787]\n"
-            f"Unread email  [white]{unread}[/white]\n"
-            f"Now playing   [white]{track}[/white]\n"
-            f"Timer         [white]{state.timer_str()}[/white]\n"
-        )
-        self.update(content)
+        parts = [
+            f"[dim]uptime[/dim] {state.uptime_str()}",
+            f"[dim]cmds[/dim] {state.commands_run}",
+            f"[dim]mail[/dim] {unread}",
+            f"[dim]track[/dim] {escape(track)}",
+            f"[dim]timer[/dim] {escape(state.timer_str())}",
+            f"[dim]theme[/dim] {state.theme_name}",
+        ]
+        self.update("   ".join(parts))
 
 
-class HelpPanel(Static):
-    """Right panel: static command reference."""
-
-    def on_mount(self) -> None:
-        lines = HELP_TEXT.strip().split("\n")
-        formatted = "[bold #7ee787]COMMANDS[/bold #7ee787]\n"
-        for line in lines[1:]:  # skip the "Commands:" header line
-            formatted += f"[#c9d1d9]{escape(line)}[/#c9d1d9]\n"
-        self.update(formatted)
-
-
-class Banner(Static):
-    def on_mount(self) -> None:
-        self.update(BANNER)
-
-
-class Homepage(Vertical):
-    """Container combining banner + stats/help side by side."""
+class TopBar(Horizontal):
+    """Container combining banner + status line + album art."""
 
     def compose(self) -> ComposeResult:
         yield Banner(id="banner")
-        with Horizontal():
-            yield StatsPanel(id="stats-panel")
-            yield HelpPanel(id="help-panel")
+        yield StatusLine(id="statusline")
+        yield AlbumArt(id="albumart")
+
+    def on_mount(self) -> None:
+        self.query_one(StatusLine).refresh_stats()
+        self.query_one(AlbumArt).show_placeholder()
 
     def refresh_stats(self) -> None:
-        self.query_one(StatsPanel).refresh_stats()
+        self.query_one(StatusLine).refresh_stats()
+
+
+# Kept as an alias so nothing else needs to change if it still imports Homepage.
+Homepage = TopBar

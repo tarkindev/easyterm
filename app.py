@@ -3,89 +3,88 @@
 Run with: python app.py
 """
 
-from textual.app import App, ComposeResult
-from textual.containers import Vertical, VerticalScroll
-from textual.widgets import Header, Footer, Input, RichLog
+import pyfiglet
 from rich.markup import escape
+from textual.app import App, ComposeResult
+from textual.widgets import Header, Footer, Input, RichLog
 
-from homepage import Homepage
+from homepage import TopBar, StatusLine
+from albumart import AlbumArt
 from commands import dispatch
 from state import state
+from themes import THEMES, DEFAULT_THEME
+
+_WELCOME_ART = escape(pyfiglet.figlet_format("EASYTERM", font="small").rstrip("\n"))
 
 
 class DailyTUI(App):
     CSS = """
     Screen {
-        background: #0a0e14;
+        background: $background;
     }
 
     Header {
-        background: #0d1117;
-        color: #39ff9d;
+        background: $surface;
+        color: $primary;
         text-style: bold;
     }
 
     Footer {
-        background: #0d1117;
-        color: #6e7681;
+        background: $surface;
     }
 
-    #main-scroll {
-        height: 1fr;
-    }
-
-    Homepage {
+    #topbar {
         height: auto;
-        border: round #39ff9d;
-        margin: 1 2 1 2;
+        max-height: 7;
+        background: $surface;
+        border: round $primary;
         padding: 1 2;
-        background: #0d1117;
-    }
-
-    Homepage Horizontal {
-        height: auto;
+        margin: 1 2 0 2;
+        opacity: 0;
     }
 
     #banner {
+        width: auto;
         height: auto;
-        margin-bottom: 1;
+        color: $primary;
+        text-style: bold;
+        padding-right: 3;
+    }
+
+    #statusline {
+        width: 1fr;
+        height: auto;
+        color: $foreground;
+        content-align: left middle;
+    }
+
+    #albumart {
+        width: 18;
+        height: 5;
+        color: $foreground;
         content-align: center middle;
     }
 
-    #stats-panel, #help-panel {
-        height: auto;
-        padding: 0 2;
-        color: #c9d1d9;
-    }
-
-    #stats-panel {
-        width: 1fr;
-        border-right: solid #21262d;
-    }
-
-    #help-panel {
-        width: 2fr;
-    }
-
     RichLog {
-        border: round #1f6feb;
-        margin: 0 2 1 2;
+        border: round $accent;
+        margin: 1 2;
         padding: 0 1;
-        background: #0d1117;
-        color: #c9d1d9;
-        min-height: 8;
+        background: $surface;
+        color: $foreground;
+        height: 1fr;
     }
 
     Input {
         dock: bottom;
         margin: 0 2 1 2;
-        border: round #39ff9d;
-        background: #0d1117;
-        color: #39ff9d;
+        border: round $primary;
+        background: $surface;
+        color: $primary;
+        transition: border 200ms;
     }
 
     Input:focus {
-        border: round #7ee787;
+        border: round $secondary;
     }
     """
 
@@ -93,40 +92,70 @@ class DailyTUI(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with VerticalScroll(id="main-scroll"):
-            yield Homepage()
-            yield RichLog(id="output", wrap=True, markup=True)
+        yield TopBar(id="topbar")
+        yield RichLog(id="output", wrap=True, markup=True)
         yield Input(placeholder="Type a command (try 'help')...", id="command-input")
         yield Footer()
 
     def on_mount(self) -> None:
+        for t in THEMES.values():
+            self.register_theme(t)
+        self.theme = state.theme_name or DEFAULT_THEME
+
         self.title = "EASYTERM"
         self.sub_title = "your day, one keystroke away"
+
+        primary = self.current_theme.primary
         log = self.query_one("#output", RichLog)
-        log.write("[#7ee787]Welcome. Type 'help' to see what I can do.[/#7ee787]")
+        log.write(f"[bold {primary}]{_WELCOME_ART}[/bold {primary}]")
+        log.write("[dim]Welcome. Type 'help' to see what I can do. Try 'theme synthwave' for a different look.[/dim]")
         self.query_one(Input).focus()
 
-        # Let background tasks (like a finishing timer) push messages into the log.
-        state.notify = self._notify
+        # Fade the top bar in on startup.
+        self.query_one("#topbar").styles.animate("opacity", value=1.0, duration=0.6, easing="out_cubic")
 
-        # Refresh stats every second so an active timer's countdown updates live.
+        # Let background tasks (a finishing timer, a theme switch, new album art)
+        # reach into the UI without holding a reference to the app.
+        state.notify = self._notify
+        state.set_theme = self._set_theme
+        state.set_album_art = self._set_album_art
+
+        # Refresh stats every second so uptime and an active timer's countdown stay live.
         self.set_interval(1.0, self._tick)
 
     def _notify(self, message: str) -> None:
         log = self.query_one("#output", RichLog)
-        log.write(message)
-        self.query_one(Homepage).refresh_stats()
-        self.query_one("#main-scroll").scroll_end(animate=False)
+        success = self.current_theme.success
+        log.write(f"[bold {success}]{escape(message)}[/bold {success}]")
+        self.query_one(TopBar).refresh_stats()
+        self.query_one(TopBar).query_one("Banner").pulse()
+        self.query_one("#output", RichLog).scroll_end(animate=False)
+
+    def _set_theme(self, name: str) -> None:
+        self.theme = name
+        state.theme_name = name
+        # Re-color the welcome-style accents that were resolved at startup.
+        self.query_one(TopBar).refresh_stats()
+
+    async def _set_album_art(self, url: str | None) -> None:
+        art = self.query_one(AlbumArt)
+        if url is None:
+            art.show_placeholder()
+            return
+        art.styles.opacity = 0.0
+        await art.show_url(url)
+        art.styles.animate("opacity", value=1.0, duration=0.5, easing="out_cubic")
 
     def _tick(self) -> None:
-        self.query_one(Homepage).refresh_stats()
+        self.query_one(TopBar).refresh_stats()
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         text = event.value
         event.input.value = ""
 
         log = self.query_one("#output", RichLog)
-        log.write(f"[bold #39ff9d]>[/bold #39ff9d] {escape(text)}")
+        primary = self.current_theme.primary
+        log.write(f"[bold {primary}]>[/bold {primary}] {escape(text)}")
 
         result = await dispatch(text)
 
@@ -137,8 +166,8 @@ class DailyTUI(App):
         if result:
             log.write(escape(result))
 
-        self.query_one(Homepage).refresh_stats()
-        self.query_one("#main-scroll").scroll_end(animate=False)
+        self.query_one(TopBar).refresh_stats()
+        log.scroll_end(animate=False)
 
 
 if __name__ == "__main__":

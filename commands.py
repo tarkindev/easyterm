@@ -3,7 +3,7 @@
 Adding a new command later = write the handler, add one line to COMMANDS.
 """
 
-from modules import spotify, email, launcher, timer, sysinfo, websearch, clock, todo, ping, clipboard
+from modules import spotify, email, launcher, timer, sysinfo, websearch, clock, todo, ping, clipboard, theme
 from state import state
 
 HELP_TEXT = """\
@@ -29,6 +29,7 @@ Commands:
   todo clear         Clear completed todos
   ping [host]        Check network connectivity
   clip <text>        Copy text to clipboard
+  theme [name]       Show/switch color theme
   stats              Refresh dashboard
   help               Show this message
   quit / exit        Close the app
@@ -45,7 +46,8 @@ async def show_stats(args: list[str]) -> str:
         f"Commands run: {state.commands_run}  |  "
         f"Unread email: {state.unread_email_count if state.unread_email_count is not None else 'not checked'}  |  "
         f"Current track: {state.current_track or 'none'}  |  "
-        f"Timer: {state.timer_str()}"
+        f"Timer: {state.timer_str()}  |  "
+        f"Theme: {state.theme_name}"
     )
 
 
@@ -60,6 +62,7 @@ COMMANDS = {
     "todo": todo.handle,
     "ping": ping.handle,
     "clip": clipboard.handle,
+    "theme": theme.handle,
     "help": show_help,
     "stats": show_stats,
 }

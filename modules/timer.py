@@ -38,7 +38,7 @@ async def _run_timer(seconds: float, label: str) -> None:
     state.active_timer_finish = None
     state.timers_completed += 1
     if state.notify:
-        state.notify(f"[bold #7ee787]Timer done:[/bold #7ee787] {label}")
+        state.notify(f"Timer done: {label}")
 
 
 def _fmt_minutes(minutes: float) -> str:

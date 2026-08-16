@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, Optional
+from typing import Awaitable, Callable, Optional
+
+from themes import DEFAULT_THEME
 
 
 @dataclass
@@ -12,6 +14,7 @@ class SessionState:
     current_track: str | None = None
     last_command: str | None = None
     commands_run: int = 0
+    theme_name: str = DEFAULT_THEME
 
     # Timer module state
     active_timer_label: str | None = None
@@ -21,6 +24,13 @@ class SessionState:
     # Set by app.py on startup. Lets background tasks (like a finishing timer)
     # push a message into the output log without holding a reference to the app.
     notify: Optional[Callable[[str], None]] = None
+
+    # Set by app.py on startup. Switches the live theme by name.
+    set_theme: Optional[Callable[[str], None]] = None
+
+    # Set by app.py on startup. Pass an image URL (or None to clear) to
+    # render/hide the album art widget. Async since it downloads the image.
+    set_album_art: Optional[Callable[[str | None], Awaitable[None]]] = None
 
     def uptime_str(self) -> str:
         delta = datetime.now() - self.started_at

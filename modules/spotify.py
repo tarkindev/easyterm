@@ -111,6 +111,8 @@ async def play(query: str | None) -> str:
             artist = track["artists"][0]["name"] if track["artists"] else "Unknown"
             sp.start_playback(uris=[uri])
             state.current_track = f"{name} - {artist}"
+            if state.set_album_art:
+                await state.set_album_art(_album_art_url(track))
             return f"Now playing: {name} by {artist}"
         else:
             sp.start_playback()
@@ -177,10 +179,21 @@ async def current() -> str:
         name = item["name"]
         artist = item["artists"][0]["name"] if item["artists"] else "Unknown"
         state.current_track = f"{name} - {artist}"
+        if state.set_album_art:
+            await state.set_album_art(_album_art_url(item))
         status = "playing" if playing.get("is_playing") else "paused"
         return f"{name} by {artist} ({status})"
     except Exception as e:
         return f"Spotify error: {e}"
+
+
+def _album_art_url(track: dict) -> str | None:
+    images = track.get("album", {}).get("images", [])
+    if not images:
+        return None
+    # Images are typically ordered largest-first; a mid/small size renders
+    # plenty well as terminal blocks and downloads faster.
+    return images[-1]["url"] if len(images) > 1 else images[0]["url"]
 
 
 async def list_devices() -> str:
